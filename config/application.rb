@@ -1,12 +1,12 @@
 require File.expand_path('../boot', __FILE__)
 
-require "rails"
+require 'rails'
 # Pick the frameworks you want:
-require "active_model/railtie"
-require "active_job/railtie"
-require "active_record/railtie"
-require "action_controller/railtie"
-require "action_mailer/railtie"
+require 'active_model/railtie'
+require 'active_job/railtie'
+require 'active_record/railtie'
+require 'action_controller/railtie'
+require 'action_mailer/railtie'
 # require "action_view/railtie"
 # require "sprockets/railtie"
 # require "rails/test_unit/railtie"
@@ -29,13 +29,13 @@ module JobHunger
     # config.i18n.load_path += Dir[Rails.root.join('my', 'locales', '*.{rb,yml}').to_s]
     # config.i18n.default_locale = :de
 
-    config.middleware.insert_before 0, "Rack::Cors" do
+    config.middleware.insert_before 0, 'Rack::Cors' do
       allow do
         origins '*'
         resource '*',
-          :headers => :any,
-          :expose  => ['access-token', 'expiry', 'token-type', 'uid', 'client'],
-          :methods => [:get, :post, :options, :delete, :put, :patch]
+                 headers: :any,
+                 expose: ['access-token', 'expiry', 'token-type', 'uid', 'client'],
+                 methods: [:get, :post, :options, :delete, :put, :patch]
       end
     end
 

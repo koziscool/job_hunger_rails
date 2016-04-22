@@ -38,13 +38,12 @@ def create_lead(company_id)
 end
 
 def create_job(company_id)
-  Job.create(title: Faker::Name.title, application_status: ['Interested', 'Applied', 'Rejected', 'Interview', 'Offer'].sample, url: Faker::Internet.url, company_id: company_id)
+  Job.create(title: Faker::Name.title, application_status: %w(Interested Applied Rejected Interview Offer).sample, url: Faker::Internet.url, company_id: company_id)
 end
-
 
 def create_company_recommendations(company)
   recommendations = [
-    "Do some google-ing to find #{company.name}'s tech blog", 
+    "Do some google-ing to find #{company.name}'s tech blog",
     "Gather some cool facts about #{company.name}"
   ]
   action = recommendations.sample

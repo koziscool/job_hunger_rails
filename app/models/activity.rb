@@ -4,5 +4,4 @@ class Activity < ActiveRecord::Base
 
   validates :user_id, presence: true
   validates :points, presence: true
-  
 end

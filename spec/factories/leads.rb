@@ -1,6 +1,6 @@
 FactoryGirl.define do
   factory :lead do
-    name "Bob"
+    name 'Bob'
     company
   end
 end

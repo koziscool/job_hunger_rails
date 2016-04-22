@@ -8,10 +8,9 @@ class AddActivities < ActiveRecord::Migration
 
       t.timestamps null: false
     end
-  end  
+  end
 
-  def down  
-    drop_table :activities  
-  end  
-
+  def down
+    drop_table :activities
+  end
 end

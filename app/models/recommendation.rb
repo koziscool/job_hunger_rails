@@ -5,5 +5,4 @@ class Recommendation < ActiveRecord::Base
   validates :user, presence: true
   validates :recommendable, presence: true
   validates :action, presence: true
-
 end

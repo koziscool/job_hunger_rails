@@ -1,8 +1,8 @@
 class User < ActiveRecord::Base
   # Include default devise modules.
   devise :database_authenticatable, :registerable,
-          :recoverable, :rememberable, :trackable, :validatable,
-          :omniauthable
+         :recoverable, :rememberable, :trackable, :validatable,
+         :omniauthable
   include DeviseTokenAuth::Concerns::User
   after_create :send_welcome_email
 
@@ -17,9 +17,11 @@ class User < ActiveRecord::Base
   end
 
   private
+
   def send_welcome_email
     UserMailer.welcome(self).deliver_now!
   end
   handle_asynchronously :send_welcome_email
+
 
 end

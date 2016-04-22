@@ -1,0 +1,541 @@
+diff --git a/Gemfile b/Gemfile index c7c57c3..df6bbdd 100644 --- a/Gemfile +++ b/Gemfile @@ -5,12 +5,12 @@ gem 'pg', '~> 0.15'
+ gem 'jbuilder', '~> 2.0'
+ gem 'sdoc', '~> 0.4.0', group: :doc
+ gem 'devise' -gem 'devise_token_auth', github: "lynndylanhurley/devise_token_auth" +gem 'devise_token_auth', github: 'lynndylanhurley/devise_token_auth'
+ gem 'omniauth'
+ gem 'faker'
+ gem 'rails_12factor'
+ gem 'jsonapi-resources' -gem 'rack-cors', :require => 'rack/cors' +gem 'rack-cors', require: 'rack/cors'
+ gem 'hirb'
+ 
+ group :development, :test do diff --git a/Guardfile b/Guardfile index deea540..154bd18 100644 --- a/Guardfile +++ b/Guardfile @@ -24,8 +24,8 @@
+ #  * zeus: 'zeus rspec' (requires the server to be started separately) * 'just' rspec: 'rspec'
+ 
+-guard :rspec, cmd: "bundle exec rspec" do - require "guard/rspec/dsl" +guard :rspec, cmd: 'bundle exec rspec' do + require 'guard/rspec/dsl'
+   dsl = Guard::RSpec::Dsl.new(self)
+ 
+   # Feel free to open issues for suggestions and improvements
+@@ -47,9 +47,9 @@ guard :rspec, cmd: "bundle exec rspec" do
+ 
+   watch(rails.controllers) do |m|
+     [ - rspec.spec.("routing/#{m[1]}_routing"), - rspec.spec.("controllers/#{m[1]}_controller"), - rspec.spec.("acceptance/#{m[1]}") + rspec.spec.call("routing/#{m[1]}_routing"), + rspec.spec.call("controllers/#{m[1]}_controller"), + rspec.spec.call("acceptance/#{m[1]}")
+     ]
+   end
+ 
+@@ -59,12 +59,12 @@ guard :rspec, cmd: "bundle exec rspec" do
+   watch(rails.app_controller) { "#{rspec.spec_dir}/controllers" }
+ 
+   # Capybara features specs
+- watch(rails.view_dirs) { |m| rspec.spec.("features/#{m[1]}") } - watch(rails.layouts) { |m| rspec.spec.("features/#{m[1]}") } + watch(rails.view_dirs) { |m| rspec.spec.call("features/#{m[1]}") } + watch(rails.layouts) { |m| rspec.spec.call("features/#{m[1]}") }
+ 
+   # Turnip features and steps
+   watch(%r{^spec/acceptance/(.+)\.feature$})
+   watch(%r{^spec/acceptance/steps/(.+)_steps\.rb$}) do |m| - Dir[File.join("**/#{m[1]}.feature")][0] || "spec/acceptance" + Dir[File.join("**/#{m[1]}.feature")][0] || 'spec/acceptance'
+   end
+ end diff --git a/app/controllers/companies_controller.rb b/app/controllers/companies_controller.rb index 4f7affe..4450b6d 100644 --- a/app/controllers/companies_controller.rb +++ b/app/controllers/companies_controller.rb @@ -1,7 +1,3 @@
+ class CompaniesController < ApplicationController
+   before_action :authenticate_user! - - - -
+ end diff --git a/app/controllers/leads_controller.rb b/app/controllers/leads_controller.rb index 3fb37ac..a537a61 100644 --- a/app/controllers/leads_controller.rb +++ b/app/controllers/leads_controller.rb @@ -1,4 +1,3 @@
+ class LeadsController < ApplicationController
+   before_action :authenticate_user! -
+ end diff --git a/app/models/activity.rb b/app/models/activity.rb index 9a0e8bc..e306c50 100644 --- a/app/models/activity.rb +++ b/app/models/activity.rb @@ -4,5 +4,4 @@ class Activity < ActiveRecord::Base
+ 
+   validates :user_id, presence: true
+   validates :points, presence: true -
+ end diff --git a/app/models/company.rb b/app/models/company.rb index d652171..96ee6a2 100644 --- a/app/models/company.rb +++ b/app/models/company.rb @@ -5,26 +5,22 @@ class Company < ActiveRecord::Base
+   has_many :recommendations, as: :recommendable, dependent: :destroy
+   has_many :scores, as: :scoreable
+ 
+-
+   validates :name, presence: true
+   validates :user_id, presence: true
+ 
+-
+   after_create :make_activity
+ 
+   private +
+   def make_activity
+     user_id = user.id
+     points = 111
+     description = "User added company #{name} to profile" - activity = Activity.new({ + activity = Activity.new(
+       user_id: user_id,
+       points: points,
+       description: description - }) + )
+     activity.save
+   end -
+ end - - diff --git a/app/models/job.rb b/app/models/job.rb index 6f44f9c..efba1c7 100644 --- a/app/models/job.rb +++ b/app/models/job.rb @@ -9,15 +9,14 @@ class Job < ActiveRecord::Base
+   after_create :make_activity
+ 
+   private +
+   def make_activity
+     user_id = company.user.id
+     points = 202
+     description = "User added job #{title} to profile" - activity = Activity.new({ - user_id: user_id, - points: points, - description: description - }) + activity = Activity.new(user_id: user_id, + points: points, + description: description)
+     activity.save
+   end
+ end diff --git a/app/models/lead.rb b/app/models/lead.rb index 2bd56b8..1b94c1b 100644 --- a/app/models/lead.rb +++ b/app/models/lead.rb @@ -3,24 +3,20 @@ class Lead < ActiveRecord::Base
+   has_many :recommendations, as: :recommendable, dependent: :destroy
+   has_many :scores, as: :scoreable
+ 
+-
+   validates :name, presence: true
+   validates :company_id, presence: true
+ 
+-
+   after_create :make_activity
+ 
+   private +
+   def make_activity
+     user_id = company.user.id
+     points = 321
+     description = "User added lead #{name} to profile" - activity = Activity.new({ - user_id: user_id, - points: points, - description: description - }) + activity = Activity.new(user_id: user_id, + points: points, + description: description)
+     activity.save
+   end -
+ end diff --git a/app/models/recommendation.rb b/app/models/recommendation.rb index ee38e79..9ce08c1 100644 --- a/app/models/recommendation.rb +++ b/app/models/recommendation.rb @@ -5,5 +5,4 @@ class Recommendation < ActiveRecord::Base
+   validates :user, presence: true
+   validates :recommendable, presence: true
+   validates :action, presence: true -
+ end diff --git a/app/models/user.rb b/app/models/user.rb index 621901e..b096281 100644 --- a/app/models/user.rb +++ b/app/models/user.rb @@ -1,8 +1,8 @@
+ class User < ActiveRecord::Base
+   # Include default devise modules.
+   devise :database_authenticatable, :registerable, - :recoverable, :rememberable, :trackable, :validatable, - :omniauthable + :recoverable, :rememberable, :trackable, :validatable, + :omniauthable
+   include DeviseTokenAuth::Concerns::User
+ 
+   has_many :activities @@ -14,5 +14,4 @@ class User < ActiveRecord::Base
+   def score
+     activities.sum :points
+   end -
+ end diff --git a/app/resources/company_resource.rb b/app/resources/company_resource.rb index e860b97..9f9455a 100644 --- a/app/resources/company_resource.rb +++ b/app/resources/company_resource.rb @@ -6,18 +6,19 @@ class CompanyResource < JSONAPI::Resource
+   attributes :name, :notes, :interest, :website, :blog, :address
+ 
+   after_create :generate_recommendation -
+ 
+   def generate_recommendation
+     recommendations = [ - "Do some google-ing to find #{@model.name}'s tech blog", + "Do some google-ing to find #{@model.name}'s tech blog",
+       "Gather some cool facts about #{@model.name}"
+     ]
+     action = recommendations.sample - Recommendation.create(recommendable_type: @model.class, recommendable_id: @model.id, completed: false, action: action, user_id: @model.user.id, start_date: DateTime.now + rand(1..3)) + Recommendation.create( + recommendable: @model, + completed: false, + action: action, 
++ user_id: @model.user.id, + start_date: DateTime.now + rand(1..3) + )
+   end - -
+ end - - diff --git a/app/resources/lead_resource.rb b/app/resources/lead_resource.rb index 1ef037e..9135253 100644 --- a/app/resources/lead_resource.rb +++ b/app/resources/lead_resource.rb @@ -5,13 +5,10 @@ class LeadResource < JSONAPI::Resource
+ 
+   after_create :generate_recommendation
+ 
+-
+   def generate_recommendation
+     recommendations = ["Step up your stalker game and find #{@model.name}'s blog", "Connect with #{@model.name} on LinkedIn", "Is #{@model.name}'s company hosting a Meetup soon?"]
+     action = recommendations.sample
+ 
+     Recommendation.create(recommendable_type: @model.class, recommendable_id: @model.id, completed: false, action: action, user_id: @model.company.user.id, start_date: DateTime.now + rand(1..3))
+   end - -
+ end diff --git a/app/resources/user_resource.rb b/app/resources/user_resource.rb index 70f85dd..db4a6f7 100644 --- a/app/resources/user_resource.rb +++ b/app/resources/user_resource.rb @@ -3,9 +3,8 @@ class UserResource < JSONAPI::Resource
+   has_many :recommendations
+   has_many :jobs
+   has_many :leads - - attributes :email, :password, :score
+ 
++ attributes :email, :password, :score
+ 
+   filter :email
+ end diff --git a/bin/setup b/bin/setup index acdb2c1..eb347f9 100755 --- a/bin/setup +++ b/bin/setup @@ -2,15 +2,15 @@
+ require 'pathname'
+ 
+ # path to your application root.
+-APP_ROOT = Pathname.new File.expand_path('../../', __FILE__) +APP_ROOT = Pathname.new File.expand_path('../../', __FILE__)
+ 
+ Dir.chdir APP_ROOT do
+   # This script is a starting point to setup your application. Add necessary setup steps to this file:
+ 
+- puts "== Installing dependencies ==" - system "gem install bundler --conservative" - system "bundle check || bundle install" + puts '== Installing dependencies ==' + system 'gem install bundler --conservative' + system 'bundle check || bundle install'
+ 
+   # puts "\n== Copying sample files ==" unless File.exist?("config/database.yml")
+@@ -18,12 +18,12 @@ Dir.chdir APP_ROOT do
+   # end
+ 
+   puts "\n== Preparing database ==" - system "bin/rake db:setup" + system 'bin/rake db:setup'
+ 
+   puts "\n== Removing old logs and tempfiles ==" - system "rm -f log/*" - system "rm -rf tmp/cache" + system 'rm -f log/*' + system 'rm -rf tmp/cache'
+ 
+   puts "\n== Restarting application server ==" - system "touch tmp/restart.txt" + system 'touch tmp/restart.txt'
+ end diff --git a/config/application.rb b/config/application.rb index 77f3c4a..51362e5 100644 --- a/config/application.rb +++ b/config/application.rb @@ -1,12 +1,12 @@
+ require File.expand_path('../boot', __FILE__)
+ 
+-require "rails" +require 'rails'
+ # Pick the frameworks you want:
+-require "active_model/railtie" -require "active_job/railtie" -require "active_record/railtie" -require "action_controller/railtie" -require "action_mailer/railtie" +require 'active_model/railtie' +require 'active_job/railtie' +require 'active_record/railtie' +require 'action_controller/railtie' +require 
+'action_mailer/railtie'
+ # require "action_view/railtie" require "sprockets/railtie" require "rails/test_unit/railtie"
+@@ -29,13 +29,13 @@ module JobHunger
+     # config.i18n.load_path += Dir[Rails.root.join('my', 'locales', '*.{rb,yml}').to_s] config.i18n.default_locale = :de
+ 
+- config.middleware.insert_before 0, "Rack::Cors" do + config.middleware.insert_before 0, 'Rack::Cors' do
+       allow do
+         origins '*'
+         resource '*', - :headers => :any, - :expose => ['access-token', 'expiry', 'token-type', 'uid', 'client'], - :methods => [:get, :post, :options, :delete, :put, :patch] + headers: :any, + expose: ['access-token', 'expiry', 'token-type', 'uid', 'client'], + methods: [:get, :post, :options, :delete, 
+:put, :patch]
+       end
+     end
+ 
+diff --git a/config/environments/development.rb b/config/environments/development.rb index 89adea1..01d12f3 100644 --- a/config/environments/development.rb +++ b/config/environments/development.rb @@ -22,7 +22,6 @@ Rails.application.configure do
+   # Raise an error on page load if there are pending migrations.
+   config.active_record.migration_error = :page_load
+ 
+-
+   # Raises error for missing translations config.action_view.raise_on_missing_translations = true
+ end diff --git a/config/environments/production.rb b/config/environments/production.rb index 788af6f..7e11ca7 100644 --- a/config/environments/production.rb +++ b/config/environments/production.rb @@ -24,7 +24,6 @@ Rails.application.configure do
+   # Apache or NGINX already handles this.
+   config.serve_static_files = ENV['RAILS_SERVE_STATIC_FILES'].present?
+ 
+-
+   # Specifies the header that your server uses for sending files. config.action_dispatch.x_sendfile_header = 'X-Sendfile' # for Apache config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for NGINX
+diff --git a/config/initializers/mime_types.rb b/config/initializers/mime_types.rb index 03bc432..4d98575 100644 --- a/config/initializers/mime_types.rb +++ b/config/initializers/mime_types.rb @@ -3,4 +3,3 @@
+ # Add new mime types for use in respond_to blocks: Mime::Type.register "text/richtext", :rtf Mime::Type.register "application/json", :json, %w( text/x-json application/jsonrequest application/vnd.api+json )
+- diff --git a/db/migrate/20160414164816_devise_create_users.rb b/db/migrate/20160414164816_devise_create_users.rb index 2d82e68..5973fe3 100644 --- a/db/migrate/20160414164816_devise_create_users.rb +++ b/db/migrate/20160414164816_devise_create_users.rb @@ -2,8 +2,8 @@ class DeviseCreateUsers < 
+ActiveRecord::Migration
+   def change
+     create_table(:users) do |t|
+       ## Database authenticatable
+- t.string :email, null: false, default: "" - t.string :encrypted_password, null: false, default: "" + t.string :email, null: false, default: '' + t.string :encrypted_password, null: false, default: ''
+ 
+       ## Recoverable
+       t.string :reset_password_token @@ -30,7 +30,6 @@ class DeviseCreateUsers < ActiveRecord::Migration
+       # t.string :unlock_token # Only if unlock strategy is :email or :both t.datetime :locked_at
+ 
+-
+       t.timestamps null: false
+     end
+ 
+diff --git a/db/migrate/20160415174723_devise_token_auth_create_users.rb b/db/migrate/20160415174723_devise_token_auth_create_users.rb index c1b4ca3..968d7ad 100644 --- a/db/migrate/20160415174723_devise_token_auth_create_users.rb +++ b/db/migrate/20160415174723_devise_token_auth_create_users.rb @@ -3,11 
++3,11 @@ class DeviseTokenAuthCreateUsers < ActiveRecord::Migration
+     drop_table(:users)
+     create_table(:users) do |t|
+       ## Required
+- t.string :provider, :null => false, :default => "email" - t.string :uid, :null => false, :default => "" + t.string :provider, null: false, default: 'email' + t.string :uid, null: false, default: ''
+ 
+       ## Database authenticatable
+- t.string :encrypted_password, :null => false, :default => "" + t.string :encrypted_password, null: false, default: ''
+ 
+       ## Recoverable
+       t.string :reset_password_token @@ -17,7 +17,7 @@ class DeviseTokenAuthCreateUsers < ActiveRecord::Migration
+       t.datetime :remember_created_at
+ 
+       ## Trackable
+- t.integer :sign_in_count, :default => 0, :null => false + t.integer :sign_in_count, default: 0, null: false
+       t.datetime :current_sign_in_at
+       t.datetime :last_sign_in_at
+       t.string :current_sign_in_ip @@ -47,8 +47,8 @@ class DeviseTokenAuthCreateUsers < ActiveRecord::Migration
+     end
+ 
+     add_index :users, :email - add_index :users, [:uid, :provider], :unique => true - add_index :users, :reset_password_token, :unique => true + add_index :users, [:uid, :provider], unique: true + add_index :users, :reset_password_token, unique: true
+     # add_index :users, :confirmation_token, :unique => true add_index :users, :unlock_token, :unique => true
+   end diff --git a/db/migrate/20160415203034_create_jobs.rb b/db/migrate/20160415203034_create_jobs.rb index 3e65d1d..734f5d7 100644 --- a/db/migrate/20160415203034_create_jobs.rb +++ b/db/migrate/20160415203034_create_jobs.rb @@ -5,7 +5,7 @@ class CreateJobs < ActiveRecord::Migration
+       t.boolean :application_status
+       t.string :url
+       t.integer :company_id, null: false - +
+       t.timestamps null: false
+     end
+   end diff --git a/db/migrate/20160419171634_addscoretousers.rb b/db/migrate/20160419171634_addscoretousers.rb index 41673a4..795976c 100644 --- a/db/migrate/20160419171634_addscoretousers.rb +++ b/db/migrate/20160419171634_addscoretousers.rb @@ -1,5 +1,5 @@
+ class Addscoretousers < ActiveRecord::Migration
+   def change - add_column :users, :score, :integer, :default => 0 + add_column :users, :score, :integer, default: 0
+   end
+ end diff --git a/db/migrate/20160419175114_add_activities.rb b/db/migrate/20160419175114_add_activities.rb index 6cde2dd..7363286 100644 --- a/db/migrate/20160419175114_add_activities.rb +++ b/db/migrate/20160419175114_add_activities.rb @@ -8,10 +8,9 @@ class AddActivities < ActiveRecord::Migration
+ 
+       t.timestamps null: false
+     end - end - - def down - drop_table :activities - end + end
+ 
++ def down + drop_table :activities + end
+ end diff --git a/db/schema.rb b/db/schema.rb index addd852..938ce5f 100644 --- a/db/schema.rb +++ b/db/schema.rb @@ -11,98 +11,97 @@
+ #
+ # It's strongly recommended that you check this file into your version control system.
+ 
+-ActiveRecord::Schema.define(version: 20160420171411) do - +ActiveRecord::Schema.define(version: 20_160_420_171_411) do
+   # These are extensions that must be enabled in order to support this database
+- enable_extension "plpgsql" + enable_extension 'plpgsql'
+ 
+- create_table "activities", force: :cascade do |t| - t.integer "user_id" - t.string "token_id" - t.integer "points" - t.string "description" - t.datetime "created_at", null: false - t.datetime "updated_at", null: false - t.string "scoreable_type" - t.integer "scoreable_id" + create_table 'activities', force: 
+:cascade do |t|
++ t.integer 'user_id' + t.string 'token_id' + t.integer 'points' + t.string 'description' + t.datetime 'created_at', null: false + t.datetime 'updated_at', null: false + t.string 'scoreable_type' + t.integer 'scoreable_id'
+   end
+ 
+- create_table "companies", force: :cascade do |t| - t.string "name", null: false - t.integer "user_id", null: false - t.text "notes" - t.integer "interest" - t.datetime "created_at", null: false - t.datetime "updated_at", null: false - t.string "website" - t.string "blog" - t.string "address" + create_table 
+'companies', force: :cascade do |t| + t.string 'name', null: false + t.integer 'user_id', null: false + t.text 'notes' + t.integer 'interest' + t.datetime 'created_at', null: false + t.datetime 'updated_at', null: false + t.string 'website' + t.string 'blog' + t.string 'address'
+   end
+ 
+- create_table "jobs", force: :cascade do |t| - t.string "title", null: false - t.string "application_status" - t.string "url" - t.integer "company_id", null: false - t.datetime "created_at", null: false - t.datetime "updated_at", null: false + create_table 'jobs', force: :cascade do |t| + t.string 'title', 
+null: false + t.string 'application_status' + t.string 'url' + t.integer 'company_id', null: false + t.datetime 'created_at', null: false + t.datetime 'updated_at', null: false
+   end
+ 
+- create_table "leads", force: :cascade do |t| - t.integer "company_id", null: false - t.string "name", null: false - t.string "linked_in" - t.string "blog" - t.text "notes" - t.datetime "created_at", null: false - t.datetime "updated_at", null: false - t.string "email" + create_table 'leads', force: :cascade 
+do |t| + t.integer 'company_id', null: false + t.string 'name', null: false + t.string 'linked_in' + t.string 'blog' + t.text 'notes' + t.datetime 'created_at', null: false + t.datetime 'updated_at', null: false + t.string 'email'
+   end
+ 
+- add_index "leads", ["company_id"], name: "index_leads_on_company_id", using: :btree + add_index 'leads', ['company_id'], name: 'index_leads_on_company_id', using: :btree
+ 
+- create_table "recommendations", force: :cascade do |t| - t.integer "user_id", null: false - t.datetime "start_date", null: false - t.string "recommendable_type", null: false - t.integer "recommendable_id", null: false - t.string "action", null: false - t.boolean "completed", null: false - t.datetime 
+"created_at", null: false - t.datetime "updated_at", null: false + create_table 'recommendations', force: :cascade do |t| + t.integer 'user_id', null: false + t.datetime 'start_date', null: false + t.string 'recommendable_type', null: false + t.integer 'recommendable_id', null: false + t.string 'action', 
+null: false + t.boolean 'completed', null: false + t.datetime 'created_at', null: false + t.datetime 'updated_at', null: false
+   end
+ 
+- add_index "recommendations", ["user_id"], name: "index_recommendations_on_user_id", using: :btree + add_index 'recommendations', ['user_id'], name: 'index_recommendations_on_user_id', using: :btree
+ 
+- create_table "users", force: :cascade do |t| - t.string "provider", default: "email", null: false - t.string "uid", default: "", null: false - t.string "encrypted_password", default: "", null: false - t.string "reset_password_token" - t.datetime "reset_password_sent_at" - t.datetime "remember_created_at" - 
+t.integer "sign_in_count", default: 0, null: false - t.datetime "current_sign_in_at" - t.datetime "last_sign_in_at" - t.string "current_sign_in_ip" - t.string "last_sign_in_ip" - t.string "confirmation_token" - t.datetime "confirmed_at" - t.datetime "confirmation_sent_at" - t.string "unconfirmed_email" - 
+t.string "name" - t.string "nickname" - t.string "image" - t.string "email" - t.string "tokens" - t.datetime "created_at" - t.datetime "updated_at" + create_table 'users', force: :cascade do |t| + t.string 'provider', default: 'email', null: false + t.string 'uid', default: '', null: false + t.string 
+'encrypted_password', default: '', null: false + t.string 'reset_password_token' + t.datetime 'reset_password_sent_at' + t.datetime 'remember_created_at' + t.integer 'sign_in_count', default: 0, null: false + t.datetime 'current_sign_in_at' + t.datetime 'last_sign_in_at' + t.string 'current_sign_in_ip' + 
+t.string 'last_sign_in_ip' + t.string 'confirmation_token' + t.datetime 'confirmed_at' + t.datetime 'confirmation_sent_at' + t.string 'unconfirmed_email' + t.string 'name' + t.string 'nickname' + t.string 'image' + t.string 'email' + t.string 'tokens' + t.datetime 'created_at' + t.datetime 'updated_at'
+   end
+ 
+- add_index "users", ["email"], name: "index_users_on_email", using: :btree - add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree - add_index "users", ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true, using: :btree + 
+add_index 'users', ['email'], name: 'index_users_on_email', using: :btree + add_index 'users', ['reset_password_token'], name: 'index_users_on_reset_password_token', unique: true, using: :btree + add_index 'users', %w(uid provider), name: 'index_users_on_uid_and_provider', unique: true, using: :btree
+ 
+- add_foreign_key "leads", "companies" - add_foreign_key "recommendations", "users" + add_foreign_key 'leads', 'companies' + add_foreign_key 'recommendations', 'users'
+ end diff --git a/db/seeds.rb b/db/seeds.rb index 19d101d..7a545d8 100644 --- a/db/seeds.rb +++ b/db/seeds.rb @@ -38,13 +38,12 @@ def create_lead(company_id)
+ end
+ 
+ def create_job(company_id) - Job.create(title: Faker::Name.title, application_status: ['Interested', 'Applied', 'Rejected', 'Interview', 'Offer'].sample, url: Faker::Internet.url, company_id: company_id) + Job.create(title: Faker::Name.title, application_status: %w(Interested Applied Rejected Interview 
+Offer).sample, url: Faker::Internet.url, company_id: company_id)
+ end
+ 
+-
+ def create_company_recommendations(company)
+   recommendations = [ - "Do some google-ing to find #{company.name}'s tech blog", + "Do some google-ing to find #{company.name}'s tech blog",
+     "Gather some cool facts about #{company.name}"
+   ]
+   action = recommendations.sample diff --git a/spec/controllers/jobs_controller_spec.rb b/spec/controllers/jobs_controller_spec.rb index 0766ca7..9e16154 100644 --- a/spec/controllers/jobs_controller_spec.rb +++ b/spec/controllers/jobs_controller_spec.rb @@ -1,18 +1,14 @@
+ require 'rails_helper'
+ 
+ RSpec.describe JobsController, type: :controller do - -
+   include Devise::TestHelpers
+ 
+   describe 'GET#index /jobs' do - - let(:user){create(:user)} - let(:company){create(:company, user: user)} - let(:job){create(:job, company: company)} + let(:user) { create(:user) } + let(:company) { create(:company, user: user) } + let(:job) { create(:job, company: company) }
+     let(:json) { JSON.parse(response.body) }
+ 
+-
+     before do
+       token_sign_in(user)
+       job @@ -21,15 +17,14 @@ RSpec.describe JobsController, type: :controller do
+     it 'gets all the jobs' do
+       get :index
+       print json - expect(json["data"].length).to eq(1) + expect(json['data'].length).to eq(1)
+     end
+   end
+ 
+   describe 'DELETE/#destroy /jobs/:id' do - - let(:user){create(:user)} - let(:company){create(:company, user: user)} - let(:job){create(:job, company: company)} + let(:user) { create(:user) } + let(:company) { create(:company, user: user) } + let(:job) { create(:job, company: company) }
+ 
+     before do
+       token_sign_in(user) @@ -37,8 +32,7 @@ RSpec.describe JobsController, type: :controller do
+     end
+ 
+     it 'deletes a job' do - expect{delete :destroy, id: job.id}.to change(Job, :count).by(-1) + expect { delete :destroy, id: job.id }.to change(Job, :count).by(-1)
+     end
+   end - -end \ No newline at end of file +end diff --git a/spec/controllers/leads_controller_spec.rb b/spec/controllers/leads_controller_spec.rb index 152718f..8e9808b 100644 --- a/spec/controllers/leads_controller_spec.rb +++ b/spec/controllers/leads_controller_spec.rb @@ -1,14 +1,12 @@
+ require 'rails_helper'
+ 
+ RSpec.describe LeadsController, type: :controller do -
+   let(:user) { create(:user) }
+   let(:json) { JSON.parse(response.body) }
+   let(:company) { create(:company, user: user) }
+   let(:lead) { create(:lead, company: company) }
+ 
+   describe 'GET #index' do -
+     before do
+       token_sign_in user
+       lead @@ -21,7 +19,6 @@ RSpec.describe LeadsController, type: :controller do
+   end
+ 
+   describe 'DELETE #destroy' do -
+     before do
+       token_sign_in user
+       lead diff --git a/spec/controllers/recommendable_controller_spec.rb b/spec/controllers/recommendable_controller_spec.rb index 5633675..455137e 100644 --- a/spec/controllers/recommendable_controller_spec.rb +++ b/spec/controllers/recommendable_controller_spec.rb @@ -1,5 +1,4 @@
+ require 'rails_helper'
+ 
+ RSpec.describe RecommendablesController, type: :controller do -
+ end diff --git a/spec/controllers/recommendations_controller_spec.rb b/spec/controllers/recommendations_controller_spec.rb index 53a772b..6f70b99 100644 --- a/spec/controllers/recommendations_controller_spec.rb +++ b/spec/controllers/recommendations_controller_spec.rb @@ -1,10 +1,9 @@
+ require 'rails_helper'
+ 
+ RSpec.describe RecommendationsController, type: :controller do -
+   describe 'GET#index /recommendations' do
+     let(:user) { create(:user) } - let(:company) { create(:company, user: user)} + let(:company) { create(:company, user: user) }
+     # let(:recommendation) { create(:recommendation, recommendable: company)}
+     let(:json) { JSON.parse(response.body) }
+ 
+@@ -17,12 +16,5 @@ RSpec.describe RecommendationsController, type: :controller do
+       get :index, format: :json
+       print json
+     end -
+   end - - - - - -
+ end diff --git a/spec/controllers/users_controller_spec.rb b/spec/controllers/users_controller_spec.rb index e2c3d3b..dd673d4 100644 --- a/spec/controllers/users_controller_spec.rb +++ b/spec/controllers/users_controller_spec.rb @@ -1,5 +1,4 @@
+ require 'rails_helper'
+ 
+ RSpec.describe UsersController, type: :controller do -
+ end diff --git a/spec/factories/activities.rb b/spec/factories/activities.rb index 38b65c8..df1bd2d 100644 --- a/spec/factories/activities.rb +++ b/spec/factories/activities.rb @@ -2,6 +2,6 @@ FactoryGirl.define do
+   factory :activity do
+     user
+     points 55 - description "emailed Jim Smith" + description 'emailed Jim Smith'
+   end
+ end diff --git a/spec/factories/companies.rb b/spec/factories/companies.rb index 6067e3d..b69df3e 100644 --- a/spec/factories/companies.rb +++ b/spec/factories/companies.rb @@ -1,7 +1,7 @@
+ FactoryGirl.define do
+   factory :company do - name "AOL" - notes "This is a note." + name 'AOL' + notes 'This is a note.'
+     interest 5
+     user
+   end diff --git a/spec/factories/jobs.rb b/spec/factories/jobs.rb index c23c2dd..0708e99 100644 --- a/spec/factories/jobs.rb +++ b/spec/factories/jobs.rb @@ -1,6 +1,6 @@
+ FactoryGirl.define do
+   factory :job do - title "Software Engineer" + title 'Software Engineer'
+     company
+   end
+ end diff --git a/spec/factories/leads.rb b/spec/factories/leads.rb index 060039d..42b9dfb 100644 --- a/spec/factories/leads.rb +++ b/spec/factories/leads.rb @@ -1,6 +1,6 @@
+ FactoryGirl.define do
+   factory :lead do - name "Bob" + name 'Bob'
+     company
+   end
+ end diff --git a/spec/factories/recommendations.rb b/spec/factories/recommendations.rb index a68ad88..6e870f7 100644 --- a/spec/factories/recommendations.rb +++ b/spec/factories/recommendations.rb @@ -1,7 +1,7 @@
+ FactoryGirl.define do
+   factory :recommendation do
+     start_date DateTime.now - action "write an email" + action 'write an email'
+     completed false
+   end
+ end diff --git a/spec/factories/users.rb b/spec/factories/users.rb index b806629..f217a8f 100644 --- a/spec/factories/users.rb +++ b/spec/factories/users.rb @@ -1,7 +1,7 @@
+ FactoryGirl.define do
+   factory :user do - email "foo@bar.com" - password "password" - password_confirmation "password" + email 'foo@bar.com' + password 'password' + password_confirmation 'password'
+   end
+ end diff --git a/spec/models/activity_spec.rb b/spec/models/activity_spec.rb index ab38c34..82ef9bc 100644 --- a/spec/models/activity_spec.rb +++ b/spec/models/activity_spec.rb @@ -3,20 +3,19 @@ require 'rails_helper'
+ RSpec.describe Activity, type: :model do
+   pending "add some examples to (or delete) #{__FILE__}"
+ 
+- let( :activity ) { build( :activity ) } + let(:activity) { build(:activity) }
+ 
+- it "is valid with default attributes" do - expect( activity ).to be_valid + it 'is valid with default attributes' do + expect(activity).to be_valid
+   end
+ 
+- it "is not valid without user_id" do + it 'is not valid without user_id' do
+     activity.user_id = nil - expect( activity ).to_not be_valid + expect(activity).to_not be_valid
+   end
+ 
+- it "is not valid without points" do + it 'is not valid without points' do
+     activity.points = nil - expect( activity ).to_not be_valid + expect(activity).to_not be_valid
+   end -
+ end diff --git a/spec/models/company_spec.rb b/spec/models/company_spec.rb index 09d968b..c601874 100644 --- a/spec/models/company_spec.rb +++ b/spec/models/company_spec.rb @@ -3,25 +3,23 @@ require 'rails_helper'
+ RSpec.describe Company, type: :model do
+   # pending "add some examples to (or delete) #{__FILE__}"
+ 
+- let( :company ) { build( :company ) } + let(:company) { build(:company) }
+ 
+- it "is valid with default attributes" do - expect( company ).to be_valid + it 'is valid with default attributes' do + expect(company).to be_valid
+   end
+ 
+- it "is not valid without name" do + it 'is not valid without name' do
+     company.name = nil - expect( company ).to_not be_valid + expect(company).to_not be_valid
+   end
+ 
+- it "is not valid without company_id" do + it 'is not valid without company_id' do
+     company.user_id = nil - expect( company ).to_not be_valid + expect(company).to_not be_valid
+   end
+ 
+- it "after_create callback creates Activity" do + it 'after_create callback creates Activity' do
+     expect { company.save }.to change { Activity.count }.by 1
+   end - -
+ end diff --git a/spec/models/job_spec.rb b/spec/models/job_spec.rb index cff5508..8f93537 100644 --- a/spec/models/job_spec.rb +++ b/spec/models/job_spec.rb @@ -3,24 +3,23 @@ require 'rails_helper'
+ RSpec.describe Job, type: :model do
+   # pending "add some examples to (or delete) #{__FILE__}"
+ 
+- let( :job ) { build( :job ) } + let(:job) { build(:job) }
+ 
+- it "is valid with default attributes" do - expect( job ).to be_valid + it 'is valid with default attributes' do + expect(job).to be_valid
+   end
+ 
+- it "is not valid without title" do + it 'is not valid without title' do
+     job.title = nil - expect( job ).to_not be_valid + expect(job).to_not be_valid
+   end
+ 
+- it "is not valid without company_id" do + it 'is not valid without company_id' do
+     job.company_id = nil - expect( job ).to_not be_valid + expect(job).to_not be_valid
+   end
+ 
+- it "after_create callback creates Activity" do + it 'after_create callback creates Activity' do
+     expect { job.save }.to change { Activity.count }.by 2
+   end -
+ end diff --git a/spec/models/lead_spec.rb b/spec/models/lead_spec.rb index e526ac6..fa54258 100644 --- a/spec/models/lead_spec.rb +++ b/spec/models/lead_spec.rb @@ -3,25 +3,23 @@ require 'rails_helper'
+ RSpec.describe Lead, type: :model do
+   # pending "add some examples to (or delete) #{__FILE__}"
+ 
+- let( :lead ) { build( :lead ) } + let(:lead) { build(:lead) }
+ 
+- it "is valid with default attributes" do - expect( lead ).to be_valid + it 'is valid with default attributes' do + expect(lead).to be_valid
+   end
+ 
+- it "is not valid without name" do + it 'is not valid without name' do
+     lead.name = nil - expect( lead ).to_not be_valid + expect(lead).to_not be_valid
+   end
+ 
+- it "is not valid without company_id" do + it 'is not valid without company_id' do
+     lead.company_id = nil - expect( lead ).to_not be_valid + expect(lead).to_not be_valid
+   end
+ 
+- it "after_create callback creates Activity" do + it 'after_create callback creates Activity' do
+     expect { lead.save }.to change { Activity.count }.by 2
+   end - -
+ end diff --git a/spec/models/recommendation_spec.rb b/spec/models/recommendation_spec.rb index f8f64fc..7c5a766 100644 --- a/spec/models/recommendation_spec.rb +++ b/spec/models/recommendation_spec.rb @@ -3,29 +3,28 @@ require 'rails_helper'
+ RSpec.describe Recommendation, type: :model do
+   # pending "add some examples to (or delete) #{__FILE__}"
+ 
+- let( :lead ) { build( :lead ) } - let( :user ) { build( :user ) } - let( :recommendation ) do - build( :recommendation, {recommendable: lead, user: user} ) + let(:lead) { build(:lead) } + let(:user) { build(:user) } + let(:recommendation) do + build(:recommendation, recommendable: lead, user: user)
+   end
+ 
+- it "is valid with default attributes" do - expect( recommendation ).to be_valid + it 'is valid with default attributes' do + expect(recommendation).to be_valid
+   end
+ 
+- it "is not valid without user_id" do + it 'is not valid without user_id' do
+     recommendation.user = nil - expect( recommendation ).to_not be_valid + expect(recommendation).to_not be_valid
+   end
+ 
+- it "is not valid without recommendable_type" do - recommendation.recommendable= nil - expect( recommendation ).to_not be_valid + it 'is not valid without recommendable_type' do + recommendation.recommendable = nil + expect(recommendation).to_not be_valid
+   end
+ 
+- it "is not valid without action" do + it 'is not valid without action' do
+     recommendation.action = nil - expect( recommendation ).to_not be_valid + expect(recommendation).to_not be_valid
+   end -
+ end diff --git a/spec/models/user_spec.rb b/spec/models/user_spec.rb index 2678d00..ada107e 100644 --- a/spec/models/user_spec.rb +++ b/spec/models/user_spec.rb @@ -3,15 +3,14 @@ require 'rails_helper'
+ RSpec.describe User, type: :model do
+   # pending "add some examples to (or delete) #{__FILE__}"
+ 
+- let( :user ) { build( :user ) } + let(:user) { build(:user) }
+ 
+- it "is valid with default attributes" do - expect( user ).to be_valid + it 'is valid with default attributes' do + expect(user).to be_valid
+   end
+ 
+- it "is not valid without encrypted_password" do + it 'is not valid without encrypted_password' do
+     user.encrypted_password = nil - expect{ user.save }.to raise_error + expect { user.save }.to raise_error
+   end -
+ end diff --git a/spec/rails_helper.rb b/spec/rails_helper.rb index 82f8006..06f5524 100644 --- a/spec/rails_helper.rb +++ b/spec/rails_helper.rb @@ -2,7 +2,7 @@
+ ENV['RAILS_ENV'] ||= 'test'
+ require File.expand_path('../../config/environment', __FILE__)
+ # Prevent database truncation if the environment is production
+-abort("The Rails environment is running in production mode!") if Rails.env.production? +abort('The Rails environment is running in production mode!') if Rails.env.production?
+ require 'spec_helper'
+ require 'rspec/rails'
+ require 'factory_girl_rails' diff --git a/spec/spec_helper.rb b/spec/spec_helper.rb index 61e2738..bc97761 100644 --- a/spec/spec_helper.rb +++ b/spec/spec_helper.rb @@ -40,53 +40,51 @@ RSpec.configure do |config|
+     mocks.verify_partial_doubles = true
+   end
+ 
+-# The settings below are suggested to provide a good initial experience -# with RSpec, but feel free to customize to your heart's content. -=begin - # These two settings work together to allow you to limit a spec run - # to individual examples or groups you care about by tagging them with - # `:focus` 
+metadata. When nothing is tagged with `:focus`, all examples - # get run. - config.filter_run :focus - config.run_all_when_everything_filtered = true - - # Allows RSpec to persist some state between runs in order to support - # the `--only-failures` and `--next-failure` CLI options. We recommend - # you 
+configure your source control system to ignore this file. - config.example_status_persistence_file_path = "spec/examples.txt" - - # Limits the available syntax to the non-monkey patched syntax that is - # recommended. For more details, see: - # - http://rspec.info/blog/2012/06/rspecs-new-expectation-syntax/ - 
+# - http://www.teaisaweso.me/blog/2013/05/27/rspecs-new-message-expectation-syntax/
+- # - http://rspec.info/blog/2014/05/notable-changes-in-rspec-3/#zero-monkey-patching-mode - config.disable_monkey_patching! - - # Many RSpec users commonly either run the entire suite or an individual - # file, and it's useful to allow more verbose output when running an - # individual spec file. - if 
+config.files_to_run.one? - # Use the documentation formatter for detailed output, - # unless a formatter has already been configured - # (e.g. via a command-line flag). - config.default_formatter = 'doc' - end - - # Print the 10 slowest examples and example groups at the - # end of the spec run, to help 
+surface which specs are running - # particularly slow. - config.profile_examples = 10 - - # Run specs in random order to surface order dependencies. If you find an - # order dependency and want to debug it, you can fix the order by providing - # the seed, which is printed after each run. - # --seed 1234 - 
+config.order = :random - - # Seed global randomization in this process using the `--seed` CLI option. - # Setting this allows you to use `--seed` to deterministically reproduce - # test failures related to randomization by passing the same `--seed` value - # as the one that triggered the failure. - 
+Kernel.srand config.seed -=end + # The settings below are suggested to provide a good initial experience + # with RSpec, but feel free to customize to your heart's content. + # # These two settings work together to allow you to limit a spec run + # # to individual examples or groups you care about by tagging 
+them with + # # `:focus` metadata. When nothing is tagged with `:focus`, all examples + # # get run. + # config.filter_run :focus + # config.run_all_when_everything_filtered = true + # + # # Allows RSpec to persist some state between runs in order to support + # # the `--only-failures` and `--next-failure` 
+CLI options. We recommend + # # you configure your source control system to ignore this file. + # config.example_status_persistence_file_path = "spec/examples.txt" + # + # # Limits the available syntax to the non-monkey patched syntax that is + # # recommended. For more details, see: + # # - 
+http://rspec.info/blog/2012/06/rspecs-new-expectation-syntax/ + # # - http://www.teaisaweso.me/blog/2013/05/27/rspecs-new-message-expectation-syntax/ + # # - http://rspec.info/blog/2014/05/notable-changes-in-rspec-3/#zero-monkey-patching-mode + # config.disable_monkey_patching! + # + # # Many RSpec users 
+commonly either run the entire suite or an individual + # # file, and it's useful to allow more verbose output when running an + # # individual spec file. + # if config.files_to_run.one? + # # Use the documentation formatter for detailed output, + # # unless a formatter has already been configured + # # (e.g. 
+via a command-line flag). + # config.default_formatter = 'doc' + # end + # + # # Print the 10 slowest examples and example groups at the + # # end of the spec run, to help surface which specs are running + # # particularly slow. + # config.profile_examples = 10 + # + # # Run specs in random order to surface 
+order dependencies. If you find an + # # order dependency and want to debug it, you can fix the order by providing + # # the seed, which is printed after each run. + # # --seed 1234 + # config.order = :random + # + # # Seed global randomization in this process using the `--seed` CLI option. + # # Setting this 
+allows you to use `--seed` to deterministically reproduce + # # test failures related to randomization by passing the same `--seed` value + # # as the one that triggered the failure. + # Kernel.srand config.seed
+ end diff --git a/spec/support/devise_token_auth.rb b/spec/support/devise_token_auth.rb index 1b4a043..b360d12 100644 --- a/spec/support/devise_token_auth.rb +++ b/spec/support/devise_token_auth.rb @@ -1,4 +1,4 @@ -def token_sign_in user +def token_sign_in(user)
+   auth_headers = user.create_new_auth_token
+   request.headers.merge!(auth_headers)
+ end @@ -7,4 +7,4 @@ def test_sign_in(user, headers)
+   auth_headers = user.create_new_auth_token
+   headers.merge!(auth_headers)
+   print headers -end \ No newline at end of file +end

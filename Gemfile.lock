@@ -301,7 +301,6 @@ DEPENDENCIES
   binding_of_caller
   byebug
   delayed_job_active_record
-  devise
   devise_token_auth!
   factory_girl_rails
   faker

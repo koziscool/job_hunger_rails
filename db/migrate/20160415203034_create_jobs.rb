@@ -5,7 +5,7 @@ class CreateJobs < ActiveRecord::Migration
       t.boolean :application_status
       t.string :url
       t.integer :company_id, null: false
-      
+
       t.timestamps null: false
     end
   end

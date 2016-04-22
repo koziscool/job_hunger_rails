@@ -1,14 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe LeadsController, type: :controller do
-
   let(:user) { create(:user) }
   let(:json) { JSON.parse(response.body) }
   let(:company) { create(:company, user: user) }
   let(:lead) { create(:lead, company: company) }
 
   describe 'GET #index' do
-
     before do
       token_sign_in user
       lead
@@ -21,7 +19,6 @@ RSpec.describe LeadsController, type: :controller do
   end
 
   describe 'DELETE #destroy' do
-
     before do
       token_sign_in user
       lead
